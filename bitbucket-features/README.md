@@ -28,8 +28,9 @@
 11. [Pricing Model](#11-pricing-model)  
 12. [Support & Community](#12-support--community)  
 13. [Final Recommendation](#13-final-recommendation)  
-14. [Conclusion](#14-conclusion)  
-15. [References](#15-references)  
+14. [Conclusion](#14-conclusion)
+15. [Contacts](#15-contacts)
+16. [References](#16-references)  
 
 ---
 
@@ -199,7 +200,15 @@ The purpose of this evaluation is to assess whether Bitbucket meets the organiza
 
 ---
 
-## 15. References
+## 15. Contacts
+
+| Name         | Email Address                                 |
+|--------------|-----------------------------------------------|
+| Sneha Joshi  | sneha.joshi.snaatak@mygurukulam.co            |
+
+---
+
+## 16. References
 
 | Source                         | URL                                                                 |
 |-------------------------------|----------------------------------------------------------------------|
