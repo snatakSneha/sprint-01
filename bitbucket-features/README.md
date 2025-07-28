@@ -208,14 +208,14 @@ The purpose of this evaluation is to assess whether Bitbucket meets the organiza
 
 ---
 
+
 ## 16. References
 
-| Source                         | URL                                                                 |
-|-------------------------------|----------------------------------------------------------------------|
-| Bitbucket Homepage            | [https://bitbucket.org/](https://bitbucket.org/)                    |
-| Bitbucket Documentation       | [https://support.atlassian.com/bitbucket-cloud/](https://support.atlassian.com/bitbucket-cloud/) |
-| Bitbucket Pricing             | [https://bitbucket.org/product/pricing](https://bitbucket.org/product/pricing) |
-| Bitbucket Pipelines Docs      | [https://bitbucket.org/product/features/pipelines](https://bitbucket.org/product/features/pipelines) |
-| Bitbucket Security & Compliance | [https://www.atlassian.com/trust/compliance](https://www.atlassian.com/trust/compliance) |
-
+| Source                          | URL                                                                                          |
+|--------------------------------|-----------------------------------------------------------------------------------------------|
+| Bitbucket Homepage             | [https://bitbucket.org/](https://bitbucket.org/)                                              |
+| Bitbucket Documentation        | [https://support.atlassian.com/bitbucket-cloud/](https://support.atlassian.com/bitbucket-cloud/) |
+| Bitbucket Pricing              | [https://bitbucket.org/product/pricing](https://bitbucket.org/product/pricing)               |
+| Bitbucket Pipelines Overview   | [https://bitbucket.org/product/features/pipelines](https://bitbucket.org/product/features/pipelines) |
+| Bitbucket Compliance & Security| [https://www.atlassian.com/trust/compliance](https://www.atlassian.com/trust/compliance)     |
  
