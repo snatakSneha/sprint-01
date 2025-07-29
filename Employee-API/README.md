@@ -115,6 +115,9 @@ sudo apt update
 sudo apt install git -y
 git --version
 ```
+<img width="1438" height="700" alt="image" src="https://github.com/user-attachments/assets/9c8c2a08-d27e-480c-b3e1-670b03fff89a" />
+
+---
 
 ### 1. Clone the Repository
 
@@ -122,6 +125,7 @@ git --version
 git clone https://github.com/OT-MICROSERVICES/employee-api
 cd employee-api/
 ````
+<img width="1166" height="229" alt="image" src="https://github.com/user-attachments/assets/5c36498e-6253-4c43-85dd-9bf0c095fcd5" />
 
 ---
 
@@ -134,6 +138,10 @@ go version
 ```
 
 >  Ensure Go is installed in `/usr/local/go`. If not, install it manually.
+```bash
+sudo apt  install golang-go
+```
+<img width="1166" height="123" alt="image" src="https://github.com/user-attachments/assets/9608f28b-7c1d-42f0-b36d-a80d428730c8" />
 
 ---
 
@@ -142,8 +150,10 @@ go version
 ```bash
 sudo apt update
 sudo apt install redis -y
-sudo systemctl enable redis --now
+sudo systemctl start redis
+sudo systemctl enable redis-server --now
 ```
+<img width="1166" height="250" alt="Screenshot from 2025-07-29 23-14-53" src="https://github.com/user-attachments/assets/1b4205cd-8c14-4334-920a-f2df240ec325" />
 
 Verify Redis:
 
@@ -151,6 +161,7 @@ Verify Redis:
 redis-server --version
 sudo systemctl status redis-server
 ```
+<img width="1166" height="430" alt="image" src="https://github.com/user-attachments/assets/2efe4054-5c54-462a-878a-2c492c1af9c1" />
 
 ---
 
@@ -167,6 +178,7 @@ Verify PostgreSQL:
 psql --version
 sudo systemctl status postgresql
 ```
+<img width="1166" height="344" alt="image" src="https://github.com/user-attachments/assets/ce0fbd63-d0a1-4dde-a8fd-a1909bc49cd1" />
 
 ---
 
