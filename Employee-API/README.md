@@ -1,0 +1,249 @@
+<img width="800" height="536" alt="image" src="https://github.com/user-attachments/assets/4377c0cf-d997-412e-8af4-925545eadc3e" />
+
+# Employee API – Proof of Concept (POC)
+
+---
+
+## Table of Contents
+1. [Introduction](#introduction) 
+2. [Document Metadata](#document-metadata)  
+3. [Purpose](#purpose)   
+4. [Scope](#scope)  
+5. [Prerequisites](#prerequisites)  
+6. [Architecture / Design](#architecture--design)  
+7. [Implementation Steps](#implementation-steps)  
+8. [Success Criteria](#success-criteria)  
+9. [Result & Validation](#result--validation)  
+10. [Troubleshooting Steps](#troubleshooting-steps)  
+11. [Deliverables](#deliverables)  
+12. [Contact Information](#contact-information)  
+13. [Conclusion](#conclusion)  
+14. [References](#references)
+
+---
+
+## Introduction
+
+The Employee API is a GoLang-based microservice that provides a RESTful interface to manage employee records. It uses PostgreSQL, Redis, and ScyllaDB as its backend data stores and integrates with Prometheus for metrics and observability. This POC aims to demonstrate its deployment on a Linux-based environment and ensure that all its endpoints are working as expected.
+
+---
+
+## Document Metadata
+
+| Created     | Version | Author        | Modified    | Comment         | Reviewer         |
+|-------------|---------|---------------|-------------|-----------------|------------------|
+| 28-07-2025  | V1      | Sneha Joshi   | 28-07-2025  | Internal Review | Siddharth Pawar  |
+
+
+---
+
+## Purpose
+
+The purpose of this POC is to deploy and validate the functionality of the **Employee API** microservice available at [https://github.com/OT-MICROSERVICES/employee-api](https://github.com/OT-MICROSERVICES/employee-api). This includes environment setup, dependency installation, database and service integration, and successful application execution.
+
+---
+
+
+
+## Scope
+
+### In-Scope
+- Environment setup for Employee API
+- Installation and configuration of PostgreSQL, Redis, Prometheus, ScyllaDB
+- Building and running the Employee API
+- Validating API functionality
+
+### Out-of-Scope
+- Containerization using Docker
+- Deployment on Kubernetes
+- CI/CD pipeline automation
+
+---
+
+## Prerequisites
+
+### System Requirements
+
+| Component          | Requirement                              |
+|--------------------|------------------------------------------|
+| Operating System   | Ubuntu 22.04 LTS                         |
+| User Access        | Sudo privileges required                 |
+| Network            | Open ports: 8080 (API), 5432 (PostgreSQL), 6379 (Redis), 9042 (ScyllaDB) |
+
+### Software Dependencies
+
+| Software       | Required Version or Info                        |
+|----------------|--------------------------------------------------|
+| GoLang         | v1.20+ (Installed in `/usr/local/go/`)          |
+| Redis          | Latest stable (Installed via APT)               |
+| PostgreSQL     | v14+                                            |
+| ScyllaDB       | Running and accessible on port 9042             |
+| Prometheus     | v2.51.2 (Binary from official GitHub release)   |
+| Make Utility   | Required to build and run migrations            |
+| Git            | Installed for cloning the repo                  |
+| `cqlsh`        | Required for accessing ScyllaDB via CLI         |
+
+---
+
+## Architecture / Design
+
+### High-Level Architecture
+
+```
+
++-------------------+
+\|    Frontend App   |   <- Optional
++-------------------+
+|
+v
++-------------------------+
+\|      Employee API       |
+\|      (GoLang App)       |
++-------------------------+
+\|      |        |
+v      v        v
+PostgreSQL Redis  ScyllaDB
+\|                   |
+v                   v
+User Data        NoSQL/Log Storage
+
+````
+
+- **API** written in GoLang.
+- **PostgreSQL** for relational storage.
+- **Redis** for caching.
+- **ScyllaDB** as a NoSQL data backend.
+- **Prometheus** used for monitoring metrics.
+
+---
+
+## Implementation Steps
+
+1. **Clone Repository**
+   ```bash
+   git clone https://github.com/OT-MICROSERVICES/employee-api
+   cd employee-api/
+   ```
+
+2. **Configure Go**
+
+   ```bash
+   echo "export PATH=$PATH:/usr/local/go/bin" >> ~/.bashrc
+   source ~/.bashrc
+   go version
+   ```
+
+3. **Install Redis**
+
+   ```bash
+   sudo apt update
+   sudo apt install redis -y
+   sudo systemctl enable redis --now
+   ```
+
+4. **Install PostgreSQL**
+
+   ```bash
+   sudo apt install postgresql postgresql-contrib -y
+   sudo systemctl enable postgresql --now
+   ```
+
+5. **Install Prometheus**
+
+   ```bash
+   wget https://github.com/prometheus/prometheus/releases/download/v2.51.2/prometheus-2.51.2.linux-amd64.tar.gz
+   tar -xvzf prometheus-2.51.2.linux-amd64.tar.gz
+   cd prometheus-2.51.2.linux-amd64
+   ./prometheus
+   ```
+
+6. **Configure and Run Migration**
+
+   ```bash
+   nano config.yaml     # Update DB config
+   nano migration.json  # Add seed data
+   sudo apt install make
+   make run-migration
+   ```
+
+7. **Build and Run Application**
+
+   ```bash
+   make build
+   ./employee-api
+   ```
+
+8. **Verify via Swagger**
+   Open: `http://<your-public-ip>:8080/swagger/index.html`
+
+---
+
+## Success Criteria
+
+| Criterion                  | Expected Outcome                            |
+| -------------------------- | ------------------------------------------- |
+| API Build & Execution      | Successful execution of `./employee-api`    |
+| API Access via Swagger UI  | Swagger loads at `:8080/swagger/index.html` |
+| Redis/Postgres Integration | Logs show successful DB connection          |
+| Prometheus Metrics Exposed | Prometheus metrics available on `/metrics`  |
+
+---
+
+## Result & Validation
+
+* API launched successfully on public IP.
+* Swagger accessible.
+* All dependencies (Redis, PostgreSQL, Prometheus, ScyllaDB) functional.
+* Database seed migration completed.
+* No runtime errors on initial run.
+
+---
+
+## Troubleshooting Steps
+
+| Issue                               | Resolution Command/Step                      |             |
+| ----------------------------------- | -------------------------------------------- | ----------- |
+| `make` not found                    | `sudo apt install make`                      |             |
+| Go binary not in PATH               | `echo "export PATH=$PATH:/usr/local/go/bin"` |             |
+| Redis not running                   | `sudo systemctl start redis-server`          |             |
+| PostgreSQL not accepting connection | `sudo systemctl restart postgresql`          |             |
+| ScyllaDB not reachable              | Check: \`ss -ltnp                            | grep 9042\` |
+| Swagger not loading                 | Check if `./employee-api` is running         |             |
+| Prometheus not starting             | Ensure correct path and permissions          |             |
+
+---
+
+## Deliverables
+
+| Deliverable   | Description                                                     |
+| ------------- | --------------------------------------------------------------- |
+| Source Code   | [GitHub Repo](https://github.com/OT-MICROSERVICES/employee-api) |
+| Build Binary  | `employee-api` Go binary                                        |
+| Config Files  | `config.yaml`, `migration.json`                                 |
+| Documentation | This POC document (README.md format)                            |
+
+---
+
+## Contact Information
+
+| Name         | Email Address                                 |
+|--------------|-----------------------------------------------|
+| Sneha Joshi  | sneha.joshi.snaatak@mygurukulam.co            |
+
+---
+
+## Conclusion
+
+This Proof of Concept successfully demonstrates that the **Employee API** microservice can be deployed and executed in a standard Linux environment with all dependencies properly configured. The API is functional, scalable, and ready for further enhancements or containerization for production-level deployment.
+
+---
+
+## References
+
+* [Employee API GitHub Repo](https://github.com/OT-MICROSERVICES/employee-api)
+* [Redis Documentation](https://redis.io/docs/)
+* [PostgreSQL Documentation](https://www.postgresql.org/docs/)
+* [GoLang Documentation](https://golang.org/doc/)
+* [Prometheus Documentation](https://prometheus.io/docs/)
+* [ScyllaDB Documentation](https://www.scylladb.com/doc/)
+
