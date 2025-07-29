@@ -106,6 +106,15 @@ The purpose of this POC is to deploy and validate the functionality of the **Emp
 
 ## Implementation Steps
 
+### 0. Install Git (If Not Already Installed)
+
+To clone the project from GitHub:
+
+```bash
+sudo apt update
+sudo apt install git -y
+git --version
+```
 
 ### 1. Clone the Repository
 
