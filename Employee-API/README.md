@@ -185,21 +185,29 @@ sudo systemctl status postgresql
 ### 5. Install ScyllaDB (Unified) – Requires 20 GB+ RAM
 
 ```bash
-# Add GPG key
+# 1. Add GPG key (for secure repo access)
 sudo mkdir -p /etc/apt/keyrings
-sudo gpg --homedir /tmp --no-default-keyring --keyring /etc/apt/keyrings/scylladb.gpg \
-  --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 491C93B9DE7496A7
+sudo gpg --homedir /tmp --no-default-keyring --keyring /etc/apt/keyrings/scylladb.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 491c93b9de7496a7
 
-# Add ScyllaDB repository
-echo "deb [signed-by=/etc/apt/keyrings/scylladb.gpg] http://downloads.scylladb.com/deb/ubuntu/scylla-5.4-ubuntu22.04-x86_64/latest stable main" | \
-  sudo tee /etc/apt/sources.list.d/scylla.list
+# 2. Add ScyllaDB Repository (Debian/Ubuntu based)
+sudo wget -O /etc/apt/sources.list.d/scylla.list http://downloads.scylladb.com/deb/debian/scylla-6.1.list
 
-# Update and install
+# 3. Update apt cache
 sudo apt update
-sudo apt install scylla -y
 
-# Enable and start the service
-sudo systemctl enable scylla-server --now
+# 4. Install Java & Scylla
+sudo apt install openjdk-11-jdk -y
+sudo apt-get install scylla
+
+# 5. Run I/O tuning (recommended before first start)
+sudo scylla_io_setup
+
+# 6. Enable developer mode (needed for low-RAM VMs like t2.micro)
+sudo /opt/scylladb/scripts/scylla_dev_mode_setup --developer-mode 1
+
+# 7. Start and enable Scylla service
+sudo systemctl start scylla-server
+sudo systemctl enable scylla-server
 ```
 
 Verify ScyllaDB:
@@ -208,6 +216,7 @@ Verify ScyllaDB:
 sudo systemctl status scylla-server
 ss -ltnp | grep 9042
 ```
+<img width="1166" height="705" alt="image" src="https://github.com/user-attachments/assets/804893e7-c194-40d4-a543-3cf20b5d6d34" />
 
 >  **Note**: ScyllaDB recommends at least **20 GB RAM**. Low-memory instances may crash or fail to start.
 
