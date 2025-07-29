@@ -92,25 +92,9 @@ The purpose of this POC is to deploy and validate the functionality of the **Emp
 
 ### High-Level Architecture
 
-```
+<img width="1691" height="674" alt="image" src="https://github.com/user-attachments/assets/bcd690fd-6d8d-4aaa-b788-0fb88bcfeaf4" />
 
-+-------------------+
-\|    Frontend App   |   <- Optional
-+-------------------+
-|
-v
-+-------------------------+
-\|      Employee API       |
-\|      (GoLang App)       |
-+-------------------------+
-\|      |        |
-v      v        v
-PostgreSQL Redis  ScyllaDB
-\|                   |
-v                   v
-User Data        NoSQL/Log Storage
 
-````
 
 - **API** written in GoLang.
 - **PostgreSQL** for relational storage.
