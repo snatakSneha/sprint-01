@@ -5,20 +5,20 @@
 ---
 
 ## Table of Contents
-1. [Introduction](#introduction) 
-2. [Document Metadata](#document-metadata)  
-3. [Purpose](#purpose)   
-4. [Scope](#scope)  
-5. [Prerequisites](#prerequisites)  
-6. [Architecture / Design](#architecture--design)  
-7. [Implementation Steps](#implementation-steps)  
-8. [Success Criteria](#success-criteria)  
-9. [Result & Validation](#result--validation)  
-10. [Troubleshooting Steps](#troubleshooting-steps)  
-11. [Deliverables](#deliverables)  
-12. [Contact Information](#contact-information)  
-13. [Conclusion](#conclusion)  
-14. [References](#references)
+- [Introduction](#introduction)
+-  [Document Metadata](#document-metadata)
+-  [Purpose](#purpose)   
+-  [Scope](#scope)  
+-  [Prerequisites](#prerequisites)  
+-  [Architecture / Design](#architecture--design)  
+-  [Implementation Steps](#implementation-steps)  
+-  [Success Criteria](#success-criteria)  
+-  [Result & Validation](#result--validation)  
+-  [Troubleshooting Steps](#troubleshooting-steps)  
+-  [Deliverables](#deliverables)  
+-  [Contact Information](#contact-information)  
+-  [Conclusion](#conclusion)  
+-  [References](#references)
 
 ---
 
@@ -106,7 +106,7 @@ The purpose of this POC is to deploy and validate the functionality of the **Emp
 
 ## Implementation Steps
 
-### 0. Install Git (If Not Already Installed)
+### 1. Install Git (If Not Already Installed)
 
 To clone the project from GitHub:
 
@@ -119,7 +119,7 @@ git --version
 
 ---
 
-### 1. Clone the Repository
+### 2. Clone the Repository
 
 ```bash
 git clone https://github.com/OT-MICROSERVICES/employee-api
@@ -129,7 +129,7 @@ cd employee-api/
 
 ---
 
-### 2. Configure Go Environment
+### 3. Configure Go Environment
 
 ```bash
 echo "export PATH=$PATH:/usr/local/go/bin" >> ~/.bashrc
@@ -145,7 +145,7 @@ sudo apt  install golang-go
 
 ---
 
-### 3. Install Redis
+### 4. Install Redis
 
 ```bash
 sudo apt update
@@ -165,7 +165,7 @@ sudo systemctl status redis-server
 
 ---
 
-### 4. Install PostgreSQL
+### 5. Install PostgreSQL
 
 ```bash
 sudo apt install postgresql postgresql-contrib -y
@@ -182,7 +182,7 @@ sudo systemctl status postgresql
 
 ---
 
-### 5. Install ScyllaDB (Unified) – Requires 20 GB+ RAM
+### 6. Install ScyllaDB (Unified) – Requires 20 GB+ RAM
 
 ```bash
 # 1. Add GPG key (for secure repo access)
@@ -222,60 +222,126 @@ ss -ltnp | grep 9042
 
 ---
 
-### 6. Test ScyllaDB Access
+#### 7. Create Keyspace and Table in ScyllaDB
+```bash
+cqlsh -u scylla -p password
+```
+Then inside cqlsh:
 
 ```bash
-cqlsh -u scylladb -p password
+CREATE KEYSPACE employee_db
+WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1};
+
+USE employee_db;
+
+CREATE TABLE employee (
+    id UUID PRIMARY KEY,
+    name TEXT,
+    designation TEXT,
+    location TEXT
+);
+
+exit;
 ```
+<img width="1332" height="494" alt="Screenshot from 2025-07-30 01-03-38" src="https://github.com/user-attachments/assets/8a0459d8-dadf-4a1b-bade-31d206f3e1d8" />
 
-> If `cqlsh` is not installed:
-
-```bash
-sudo apt install python3-pip -y
-pip install cqlsh
-```
-
----
-
-### 7. Install Prometheus
-
-```bash
-wget https://github.com/prometheus/prometheus/releases/download/v2.51.2/prometheus-2.51.2.linux-amd64.tar.gz
-tar -xvzf prometheus-2.51.2.linux-amd64.tar.gz
-cd prometheus-2.51.2.linux-amd64
-./prometheus
-```
-
-> Keep Prometheus running in background or another terminal.
-
----
 
 ### 8. Configure the Application
 
 Edit the following files to configure DB connections and initial data:
 
 ```bash
-nano config.yaml         # Add DB credentials and service endpoints
-nano migration.json      # Add initial seed data
+nano config.yaml 
+```
+- ##### Add DB credentials and service endpoints
+```bash
+host: ["localhost:9042"]
+  username: scylladb
+  password: password
+  keyspace: employee_db
+
+redis:
+  enabled: false
+  host: localhost:6379
+  password: password
+  database: 0
+```
+```bash
+nano migration.json      
+```
+- #### Add initial seed data
+```bash
+{
+  "database": "cassandra://localhost:9042/employee_db?username=scylladb&password=password"
+}
 ```
 
+```bash
+nano main.go     
+```
+- #### Add public IP
+
+```bash
+package main
+
+import (
+	docs "employee-api/docs"
+	"employee-api/middleware"
+	"employee-api/routes"
+	"github.com/gin-gonic/gin"
+	"github.com/penglongli/gin-metrics/ginmetrics"
+	"github.com/sirupsen/logrus"
+	swaggerfiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
+)
+
+var router = gin.New()
+
+func init() {
+	logrus.SetLevel(logrus.InfoLevel)
+	logrus.SetFormatter(&logrus.JSONFormatter{}) // NEW
+}
+
+// @title Employee API
+// @version 1.0
+// @description The REST API documentation for employee webserver
+// @termsOfService http://swagger.io/terms/
+
+// @contact.name Opstree Solutions
+// @contact.url https://opstree.com
+// @contact.email opensource@opstree.com
+
+// @license.name Apache 2.0
+// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
+// @BasePath /api/v1
+// @schemes http
+func main() {
+	monitor := ginmetrics.GetMonitor()
+	monitor.SetMetricPath("/metrics")
+	monitor.SetSlowTime(1)
+	monitor.SetDuration([]float64{0.1, 0.3, 1.2, 5, 10})
+	monitor.Use(router)
+	router.Use(gin.Recovery())                  // NEW
+	router.Use(middlewares.LoggingMiddleware()) // NEW
+	v1 := router.Group("/api/v1")
+	docs.SwaggerInfo.BasePath = "/api/v1/employee"
+	routes.CreateRouterForEmployee(v1)
+	url := ginSwagger.URL("http://54.160.111.7:8080/swagger/doc.json")
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler, url))
+	router.Run(":8080")
+}
+
+```
 ---
 
-### 9. Run Migration with Makefile
-
-Install `make` if not already installed:
+### 9. Install `make` if not already installed:
 
 ```bash
 sudo apt install make -y
 ```
+<img width="1332" height="168" alt="image" src="https://github.com/user-attachments/assets/28a659e2-ab96-4c77-8d44-a227b512737a" />
 
-Run the migration:
 
-```bash
-make run-migration
-```
-
----
 
 ### 10. Build and Run the Employee API
 
@@ -283,6 +349,7 @@ make run-migration
 make build
 ./employee-api
 ```
+<img width="1855" height="740" alt="image" src="https://github.com/user-attachments/assets/917493fd-786d-4738-8e48-678f0f608ed4" />
 
 ---
 
@@ -293,16 +360,18 @@ Open in browser:
 ```
 http://<your-public-ip>:8080/swagger/index.html
 ```
+<img width="1855" height="1007" alt="image" src="https://github.com/user-attachments/assets/41551863-39f8-4f1e-92f3-28ce7c7a8395" />
 
-You should see the interactive API documentation and be able to test endpoints like:
+You should see the interactive API documentation and be able to test endpoints.
 
-* `GET /api/v1/employees`
-* `POST /api/v1/employee`
-* `PUT /api/v1/employee/{id}`
-* `DELETE /api/v1/employee/{id}`
+- #### For Health Check
+
+```
+http://54.160.111.7:8080/api/v1/employee/health
+```
+<img width="1332" height="221" alt="image" src="https://github.com/user-attachments/assets/24dc2516-ba10-4256-855c-5d12faa9c534" />
 
 ---
-
 
 ## Success Criteria
 
@@ -324,7 +393,6 @@ You should see the interactive API documentation and be able to test endpoints l
 | Swagger UI loaded                 |  Success |
 | PostgreSQL connection established |  Success |
 | Redis server integrated           |  Success |
-| Prometheus started and exposed    |  Success |
 | ScyllaDB accessible via CQLSH     |  Success |
 | Migration executed via Makefile   |  Success |
 
@@ -342,7 +410,6 @@ You should see the interactive API documentation and be able to test endpoints l
 | ScyllaDB not reachable (port 9042)  | \`ss -ltnp                                   | grep 9042\` |
 | Can't access ScyllaDB               | Use `cqlsh -u scylladb -p password`          |             |
 | Swagger not loading                 | Check if `./employee-api` is running         |             |
-| Prometheus not starting             | Ensure path and binary permissions           |             |
 
 ---
 
@@ -379,6 +446,5 @@ This Proof of Concept successfully demonstrates that the **Employee API** micros
 * [Redis Documentation](https://redis.io/docs/)
 * [PostgreSQL Documentation](https://www.postgresql.org/docs/)
 * [GoLang Documentation](https://golang.org/doc/)
-* [Prometheus Documentation](https://prometheus.io/docs/)
 * [ScyllaDB Documentation](https://www.scylladb.com/doc/)
 
