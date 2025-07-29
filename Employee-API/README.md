@@ -64,11 +64,14 @@ The purpose of this POC is to deploy and validate the functionality of the **Emp
 
 ### System Requirements
 
-| Component          | Requirement                              |
-|--------------------|------------------------------------------|
-| Operating System   | Ubuntu 22.04 LTS                         |
-| User Access        | Sudo privileges required                 |
-| Network            | Open ports: 8080 (API), 5432 (PostgreSQL), 6379 (Redis), 9042 (ScyllaDB) |
+| Component        | Requirement                                         |
+|------------------|-----------------------------------------------------|
+| Operating System | Ubuntu 22.04 LTS                                    |
+| User Access      | Sudo privileges required                            |
+| Network          | Open ports: 8080 (API), 5432 (PostgreSQL), 6379 (Redis), 9042 (ScyllaDB) |
+| System Memory    | **20 GB+ RAM** recommended (for ScyllaDB compatibility) |
+
+
 
 ### Software Dependencies
 
@@ -119,64 +122,173 @@ User Data        NoSQL/Log Storage
 
 ## Implementation Steps
 
-1. **Clone Repository**
-   ```bash
-   git clone https://github.com/OT-MICROSERVICES/employee-api
-   cd employee-api/
-   ```
 
-2. **Configure Go**
+### 1. Clone the Repository
 
-   ```bash
-   echo "export PATH=$PATH:/usr/local/go/bin" >> ~/.bashrc
-   source ~/.bashrc
-   go version
-   ```
-
-3. **Install Redis**
-
-   ```bash
-   sudo apt update
-   sudo apt install redis -y
-   sudo systemctl enable redis --now
-   ```
-
-4. **Install PostgreSQL**
-
-   ```bash
-   sudo apt install postgresql postgresql-contrib -y
-   sudo systemctl enable postgresql --now
-   ```
-
-5. **Install Prometheus**
-
-   ```bash
-   wget https://github.com/prometheus/prometheus/releases/download/v2.51.2/prometheus-2.51.2.linux-amd64.tar.gz
-   tar -xvzf prometheus-2.51.2.linux-amd64.tar.gz
-   cd prometheus-2.51.2.linux-amd64
-   ./prometheus
-   ```
-
-6. **Configure and Run Migration**
-
-   ```bash
-   nano config.yaml     # Update DB config
-   nano migration.json  # Add seed data
-   sudo apt install make
-   make run-migration
-   ```
-
-7. **Build and Run Application**
-
-   ```bash
-   make build
-   ./employee-api
-   ```
-
-8. **Verify via Swagger**
-   Open: `http://<your-public-ip>:8080/swagger/index.html`
+```bash
+git clone https://github.com/OT-MICROSERVICES/employee-api
+cd employee-api/
+````
 
 ---
+
+### 2. Configure Go Environment
+
+```bash
+echo "export PATH=$PATH:/usr/local/go/bin" >> ~/.bashrc
+source ~/.bashrc
+go version
+```
+
+>  Ensure Go is installed in `/usr/local/go`. If not, install it manually.
+
+---
+
+### 3. Install Redis
+
+```bash
+sudo apt update
+sudo apt install redis -y
+sudo systemctl enable redis --now
+```
+
+Verify Redis:
+
+```bash
+redis-server --version
+sudo systemctl status redis-server
+```
+
+---
+
+### 4. Install PostgreSQL
+
+```bash
+sudo apt install postgresql postgresql-contrib -y
+sudo systemctl enable postgresql --now
+```
+
+Verify PostgreSQL:
+
+```bash
+psql --version
+sudo systemctl status postgresql
+```
+
+---
+
+### 5. Install ScyllaDB (Unified) – Requires 20 GB+ RAM
+
+```bash
+# Add GPG key
+sudo mkdir -p /etc/apt/keyrings
+sudo gpg --homedir /tmp --no-default-keyring --keyring /etc/apt/keyrings/scylladb.gpg \
+  --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 491C93B9DE7496A7
+
+# Add ScyllaDB repository
+echo "deb [signed-by=/etc/apt/keyrings/scylladb.gpg] http://downloads.scylladb.com/deb/ubuntu/scylla-5.4-ubuntu22.04-x86_64/latest stable main" | \
+  sudo tee /etc/apt/sources.list.d/scylla.list
+
+# Update and install
+sudo apt update
+sudo apt install scylla -y
+
+# Enable and start the service
+sudo systemctl enable scylla-server --now
+```
+
+Verify ScyllaDB:
+
+```bash
+sudo systemctl status scylla-server
+ss -ltnp | grep 9042
+```
+
+>  **Note**: ScyllaDB recommends at least **20 GB RAM**. Low-memory instances may crash or fail to start.
+
+---
+
+### 6. Test ScyllaDB Access
+
+```bash
+cqlsh -u scylladb -p password
+```
+
+> If `cqlsh` is not installed:
+
+```bash
+sudo apt install python3-pip -y
+pip install cqlsh
+```
+
+---
+
+### 7. Install Prometheus
+
+```bash
+wget https://github.com/prometheus/prometheus/releases/download/v2.51.2/prometheus-2.51.2.linux-amd64.tar.gz
+tar -xvzf prometheus-2.51.2.linux-amd64.tar.gz
+cd prometheus-2.51.2.linux-amd64
+./prometheus
+```
+
+> Keep Prometheus running in background or another terminal.
+
+---
+
+### 8. Configure the Application
+
+Edit the following files to configure DB connections and initial data:
+
+```bash
+nano config.yaml         # Add DB credentials and service endpoints
+nano migration.json      # Add initial seed data
+```
+
+---
+
+### 9. Run Migration with Makefile
+
+Install `make` if not already installed:
+
+```bash
+sudo apt install make -y
+```
+
+Run the migration:
+
+```bash
+make run-migration
+```
+
+---
+
+### 10. Build and Run the Employee API
+
+```bash
+make build
+./employee-api
+```
+
+---
+
+### 11. Verify via Swagger UI
+
+Open in browser:
+
+```
+http://<your-public-ip>:8080/swagger/index.html
+```
+
+You should see the interactive API documentation and be able to test endpoints like:
+
+* `GET /api/v1/employees`
+* `POST /api/v1/employee`
+* `PUT /api/v1/employee/{id}`
+* `DELETE /api/v1/employee/{id}`
+
+---
+
 
 ## Success Criteria
 
@@ -186,41 +298,50 @@ User Data        NoSQL/Log Storage
 | API Access via Swagger UI  | Swagger loads at `:8080/swagger/index.html` |
 | Redis/Postgres Integration | Logs show successful DB connection          |
 | Prometheus Metrics Exposed | Prometheus metrics available on `/metrics`  |
+|ScyllaDB CQL Connectivity   | Successful login using cqlsh                |
 
 ---
 
 ## Result & Validation
 
-* API launched successfully on public IP.
-* Swagger accessible.
-* All dependencies (Redis, PostgreSQL, Prometheus, ScyllaDB) functional.
-* Database seed migration completed.
-* No runtime errors on initial run.
+
+| Test Case                         | Status   |
+| --------------------------------- | -------- |
+| Swagger UI loaded                 |  Success |
+| PostgreSQL connection established |  Success |
+| Redis server integrated           |  Success |
+| Prometheus started and exposed    |  Success |
+| ScyllaDB accessible via CQLSH     |  Success |
+| Migration executed via Makefile   |  Success |
 
 ---
 
 ## Troubleshooting Steps
 
-| Issue                               | Resolution Command/Step                      |             |
+
+| Issue                               | Resolution                                   |             |
 | ----------------------------------- | -------------------------------------------- | ----------- |
 | `make` not found                    | `sudo apt install make`                      |             |
 | Go binary not in PATH               | `echo "export PATH=$PATH:/usr/local/go/bin"` |             |
 | Redis not running                   | `sudo systemctl start redis-server`          |             |
 | PostgreSQL not accepting connection | `sudo systemctl restart postgresql`          |             |
-| ScyllaDB not reachable              | Check: \`ss -ltnp                            | grep 9042\` |
+| ScyllaDB not reachable (port 9042)  | \`ss -ltnp                                   | grep 9042\` |
+| Can't access ScyllaDB               | Use `cqlsh -u scylladb -p password`          |             |
 | Swagger not loading                 | Check if `./employee-api` is running         |             |
-| Prometheus not starting             | Ensure correct path and permissions          |             |
+| Prometheus not starting             | Ensure path and binary permissions           |             |
 
 ---
 
 ## Deliverables
 
-| Deliverable   | Description                                                     |
-| ------------- | --------------------------------------------------------------- |
-| Source Code   | [GitHub Repo](https://github.com/OT-MICROSERVICES/employee-api) |
-| Build Binary  | `employee-api` Go binary                                        |
-| Config Files  | `config.yaml`, `migration.json`                                 |
-| Documentation | This POC document (README.md format)                            |
+
+| Deliverable          | Description                                                     |
+| -------------------- | --------------------------------------------------------------- |
+| Source Code          | [GitHub Repo](https://github.com/OT-MICROSERVICES/employee-api) |
+| Build Binary         | `employee-api` Go binary                                        |
+| Config Files         | `config.yaml`, `migration.json`                                 |
+| Documentation        | This POC document (README.md format)                            |
+| Architecture Diagram | `employee_api_architecture_final.png`                           |
 
 ---
 
